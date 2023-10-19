@@ -30,10 +30,16 @@ class OciCohereEmbeddings(BaseModel, Embeddings):
     """Model name to use."""
 
     config: str = "~/.oci/config"
+    """Path to the config file. Defaults to ~/.oci/config."""
+
+    profile: str = "DEFAULT"
+    """The profile to load from the config file. Defaults to "DEFAULT"."""
 
     endpoint: str = "https://generativeai.aiservice.us-chicago-1.oci.oraclecloud.com"
+    """OCI Generative AI endpoint. Defaults to https://generativeai.aiservice.us-chicago-1.oci.oraclecloud.com."""
 
     compartment_id: str
+    """Compartment ID to use."""
 
     truncate: Optional[str] = None
     """Truncate embeddings that are too long from start or end ("NONE"|"START"|"END")"""
@@ -47,16 +53,19 @@ class OciCohereEmbeddings(BaseModel, Embeddings):
     def validate_environment(cls, values: Dict) -> Dict:
         """Validate that api key and python package exists in environment."""
         print("### in validate_environment ###")
-        config = get_from_dict_or_env(
-            values, "config", "CONFIG"
-        )
-        endpoint = get_from_dict_or_env(
-            values, "endpoint", "ENDPOINT"
-        )
         try:
             import oci
 
-            config = oci.config.from_file(config, "DEFAULT")
+            config = get_from_dict_or_env(
+                values, "config", "CONFIG"
+            )
+            profile = get_from_dict_or_env(
+                values, "profile", "PROFILE"
+            )
+            endpoint = get_from_dict_or_env(
+                values, "endpoint", "ENDPOINT"
+            )
+            config = oci.config.from_file(config, profile)
             values["client"] = oci.generative_ai.GenerativeAiClient(config=config, service_endpoint=endpoint,
                                                                     retry_strategy=oci.retry.NoneRetryStrategy(),
                                                                     timeout=(10, 240))
